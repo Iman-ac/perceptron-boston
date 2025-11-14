@@ -5,33 +5,33 @@ from mpl_toolkits.mplot3d import Axes3D
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
-import urllib.request  # برای دانلود CSV اگر لازم
+import urllib.request 
 
-# لود دیتاست Boston از CSV مستقیم (بدون sklearn issue)
+"""Load Boston Housing dataset"""
 url = "https://raw.githubusercontent.com/selva86/datasets/master/BostonHousing.csv"
 try:
     df = pd.read_csv(url)
     print("Boston CSV loaded successfully!")
-    print("شکل داده‌ها:", df.shape)  # باید (506, 14)
-    X = df[['rm', 'age']].values  # RM=اتاق‌ها (مساحت-like), AGE=سن
+    print("Data shape:", df.shape)  
+    X = df[['rm', 'age']].values  # RM=اتاق‌ها (مثل مساحت), AGE=سن
     y = df['medv'].values.reshape(-1, 1)  # MEDV=قیمت (هزار دلار)
     features = ['RM', 'AGE']
     dataset_name = "Boston"
 except Exception as e:
     print("خطا در لود CSV:", str(e))
-    # جایگزین محلی: اگر اینترنت نداری، CSV رو دستی دانلود و لود کن
-    # df = pd.read_csv('BostonHousing.csv')  # فایل محلی
+    
+ 
     raise e
 
-# آمار اولیه
+"""Initial statistics"""
 print("همبستگی ویژگی‌ها با y:")
 df_corr = pd.concat([pd.DataFrame(X, columns=features), pd.DataFrame(y, columns=['Price'])], axis=1)
 print(df_corr.corr()['Price'])
 
-# تقسیم داده‌ها به train/test (80/20)
+"""Split data into train/test (80/20)"""
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# نرمال‌سازی
+"""Normalization"""
 scaler_X = StandardScaler()
 scaler_y = StandardScaler()
 X_train_scaled = scaler_X.fit_transform(X_train)
@@ -65,11 +65,11 @@ class PerceptronRegressor:
     def predict(self, X):
         return np.dot(X, self.weights) + self.bias
 
-# آموزش
+"""Training"""
 model = PerceptronRegressor(learning_rate=0.001, n_epochs=2000)
 model.fit(X_train_scaled, y_train_scaled.ravel())
 
-# پیش‌بینی و ارزیابی
+"""Prediction and evaluation"""
 y_train_pred_scaled = model.predict(X_train_scaled)
 y_test_pred_scaled = model.predict(X_test_scaled)
 y_train_pred = scaler_y.inverse_transform(y_train_pred_scaled.reshape(-1, 1)).ravel()
@@ -80,10 +80,10 @@ print("MSE Test:", mean_squared_error(y_test, y_test_pred))
 print("وزن‌ها (w1=RM, w2=AGE):", model.weights)
 print("Bias:", model.bias)
 
-# Plot 3D
+"""Plot 3D"""
 fig = plt.figure(figsize=(12, 5))
 
-# Real Data
+"""Real Data"""
 ax1 = fig.add_subplot(121, projection='3d')
 ax1.scatter(X_train[:, 0], X_train[:, 1], y_train, c='blue', alpha=0.6)
 ax1.set_xlabel('RM (Rooms)')
@@ -91,11 +91,11 @@ ax1.set_ylabel('AGE')
 ax1.set_zlabel('Price (k$)')
 ax1.set_title('Real Data (3D) - Boston')
 
-# Real + Predicted Plane
+"""Real + Predicted Plane"""
 ax2 = fig.add_subplot(122, projection='3d')
 ax2.scatter(X_train[:, 0], X_train[:, 1], y_train, c='blue', alpha=0.6)
 
-# Meshgrid برای plane
+"""Meshgrid for plane"""
 xx, yy = np.meshgrid(np.linspace(X_train[:, 0].min(), X_train[:, 0].max(), 20),
                      np.linspace(X_train[:, 1].min(), X_train[:, 1].max(), 20))
 xx_scaled = scaler_X.transform(np.c_[xx.ravel(), yy[0,0] * np.ones_like(xx.ravel())])[:, 0].reshape(xx.shape)
